@@ -14,8 +14,10 @@ class Dvisvgm < Formula
   depends_on "automake" => :build
   depends_on "libtool" => :build
   depends_on "pkgconf" => :build
+  depends_on "brotli"
   depends_on "freetype"
   depends_on "ghostscript"
+  depends_on "potrace"
   depends_on "texlive"
   depends_on "woff2"
 
