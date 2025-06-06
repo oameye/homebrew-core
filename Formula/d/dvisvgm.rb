@@ -13,27 +13,22 @@ class Dvisvgm < Formula
   depends_on "autoconf" => :build
   depends_on "automake" => :build
   depends_on "libtool" => :build
-  depends_on "llvm" => :build
   depends_on "pkgconf" => :build
   depends_on "freetype"
   depends_on "ghostscript"
   depends_on "texlive"
   depends_on "woff2"
+
   uses_from_macos "zlib"
 
   def install
-    # Set environment variables to use LLVM clang
-    llvm_bin = Formula["llvm"].opt_bin
-    llvm_include = Formula["llvm"].opt_include
-    llvm_lib = Formula["llvm"].opt_lib
+    args = [
+      "--disable-silent-rules"
+      "--with-texlive=#{Formula["texlive"].opt_prefix}"
+    ]
+    args << "--with-zlib=#{Formula["zlib"].opt_prefix}" if OS.linux?
 
-    ENV["CC"] = "#{llvm_bin}/clang"
-    ENV["CXX"] = "#{llvm_bin}/clang++"
-    ENV["LDFLAGS"] = "-L#{llvm_lib} -L#{Formula["texlive"].opt_lib}"
-    ENV["CPPFLAGS"] = "-I#{llvm_include} -I#{Formula["texlive"].opt_include}"
-    ENV["CXXFLAGS"] = "-stdlib=libc++ -I#{llvm_include}/c++/v1"
-
-    system "./configure", *std_configure_args, "--disable-silent-rules"
+    system "./configure", *args, *std_configure_args
     # Optional: "--with-ttfautohint" if ttfautohint is a dependency
     system "make"
     system "make", "install"
