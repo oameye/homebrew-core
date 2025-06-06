@@ -24,7 +24,7 @@ class Dvisvgm < Formula
   def install
     args = [
       "--disable-silent-rules",
-      "--with-texlive=#{Formula["texlive"].opt_prefix}"
+      "--with-texlive=#{Formula["texlive"].opt_prefix}",
     ]
     args << "--with-zlib=#{Formula["zlib"].opt_prefix}" if OS.linux?
 
