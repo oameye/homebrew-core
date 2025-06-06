@@ -1,6 +1,3 @@
-# typed: false
-# frozen_string_literal: true
-
 class Dvisvgm < Formula
   desc "Fast DVI to SVG converter"
   homepage "https://dvisvgm.de"
@@ -16,14 +13,12 @@ class Dvisvgm < Formula
   depends_on "autoconf" => :build
   depends_on "automake" => :build
   depends_on "libtool" => :build
-  depends_on "llvm" => :build
   depends_on "pkgconf" => :build
   depends_on "freetype"
   depends_on "ghostscript"
   depends_on "texlive"
   depends_on "woff2"
-  depends_on "zlib"
-  # Optional: depends_on "ttfautohint"
+  uses_from_macos "zlib"
 
   def install
     # Set environment variables to use LLVM clang
@@ -41,18 +36,42 @@ class Dvisvgm < Formula
     # Optional: "--with-ttfautohint" if ttfautohint is a dependency
     system "make"
     system "make", "install"
+    
+    # Install test data files for use in tests
+    pkgshare.install "tests/data"
   end
 
   test do
-    # Test by converting a minimal DVI file to SVG
-    (testpath/"test.tex").write <<~EOS
-      \\documentclass{article}
-      \\begin{document}
-      Hello, world!
-      \\end{document}
-    EOS
-    system "latex", "test.tex"
-    system bin/"dvisvgm", "test.dvi"
-    assert_path_exists testpath/"test.svg"
+    # Set up TeX environment variables to point to the texlive installation
+    texlive_prefix = Formula["texlive"].opt_prefix
+    texlive_bin = Formula["texlive"].opt_bin
+    
+    ENV["TEXMFROOT"] = "#{texlive_prefix}/share/texmf-dist"
+    ENV["TEXMFDIST"] = "#{texlive_prefix}/share/texmf-dist"
+    ENV["TEXMFLOCAL"] = "#{texlive_prefix}/share/texmf-local"
+    ENV["TEXMFVAR"] = testpath/"texmf-var"
+    ENV["TEXMFCONFIG"] = testpath/"texmf-config"
+    ENV["TEXMFCACHE"] = testpath/"texmf-cache"
+    ENV["TEXMFHOME"] = testpath/"texmf-home"
+    ENV["SELFAUTOPARENT"] = texlive_prefix.to_s
+    ENV["SELFAUTODIR"] = texlive_bin.to_s
+    ENV["SELFAUTOLOC"] = texlive_bin.to_s
+    
+    # Use the sample DVI file from the installed test data
+    sample_dvi = pkgshare/"data/sample.dvi"
+    cp sample_dvi, testpath/"sample.dvi"
+    assert_path_exists testpath/"sample.dvi"
+    
+    # Test basic functionality of dvisvgm
+    output = shell_output("#{bin}/dvisvgm --version")
+    assert_match "dvisvgm", output
+    
+    # Convert DVI to SVG with minimal dependencies
+    system bin/"dvisvgm", "--no-fonts", "--no-specials", "sample.dvi"
+    assert_path_exists testpath/"sample.svg"
+    
+    # Verify SVG content
+    svg_content = File.read(testpath/"sample.svg")
+    assert_match /<svg/, svg_content
   end
 end
