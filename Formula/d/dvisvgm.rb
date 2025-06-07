@@ -36,7 +36,7 @@ class Dvisvgm < Formula
     system "make", "install"
 
     # Avoid references to the Homebrew shims directory
-    inreplace share/"dvisvgm/data/Makefile", Superenv.shims_path/ENV.cc, ENV.cc
+    inreplace "share/dvisvgm/data/Makefile", Superenv.shims_path/ENV.cc, ENV.cc
 
     # Install test data files for use in tests
     pkgshare.install "tests/data"
